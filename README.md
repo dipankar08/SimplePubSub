@@ -1,5 +1,5 @@
 # Why SimplePubSub ?
-Welcome to world's simple signaling solution. If you are prototyping some prioject which requirs realtime communication between multiple devices( or endpoints), you are in the right place. 
+Welcome to world's simplest signaling solution. If you are prototyping some prioject which requires realtime communication between multiple devices( or endpoints), you are in the right place. 
 
 SimplePubSub provides a quick and darty way to test your prototype. The API is easy and quick - however not scalable. 
 
