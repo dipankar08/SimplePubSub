@@ -54,7 +54,7 @@ wss.on('connection', function connection(ws) {
                 var data = msg.data;
                 matchClients = topicMaps.get(topic);
                 if(matchClients && matchClients.size > 0){
-                    console.log("[SimplePubSub] message forword to "+matchClients.length+" clients.")
+                    console.log("[SimplePubSub] message forword to "+matchClients.size+" clients.")
                     matchClients.forEach(function(client) {
                         client.send(JSON.stringify({'type':'message','topic':topic, 'data':data}));
                     });
