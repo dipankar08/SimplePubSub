@@ -4,7 +4,7 @@ Welcome to world's simple signaling solution. If you are prototyping some prioje
 SimplePubSub provides a quick and darty way to test your prototype. The API is easy and quick - however not scalable. 
 
 
-# Using SimplePubSub
+# SDK
 I wrote the simple and handly API for signaling mutiple parties which is connected to SimplePubSub server. Currently sdk is written is java and javascript - but fell free to write your own and contibute it here. 
 
 ## JavaScript
@@ -43,7 +43,7 @@ SimplePubSub.unsubscribe("hello")
 SimplePubSub.publish("hello","sent hello") // will not send the event. 
 ```
 
-# Starting the server.
+# SERVER
 You can follow 3 quick steps to setup the server. This is build on top of nodejs and ws. So please make sure that we have the latest version of nodejs and npm insatll in your devserver.
 1. Clone the repro.
 2. go to SimplepubSub and run <npm install>.
