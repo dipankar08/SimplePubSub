@@ -1,5 +1,5 @@
 var SimplePubSub = (function(){
-    var URL="ws://0.0.0.0:8081"
+    var URL="ws://simplestore.dipankar.co.in:8081"
     var callbacks = new Array()
     var ws = null;
 
