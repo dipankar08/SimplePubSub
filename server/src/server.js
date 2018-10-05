@@ -57,6 +57,7 @@ wss.on('connection', function connection(ws) {
                         if(client.readyState == client.OPEN){
                             client.send(JSON.stringify({'type':'message','topic':topic, 'data':data}));
                         } else {
+                            matchClients.delete(client);
                             console.log("[SimplePubSub] Error: Try to send send msg to closed client")
                         }
                     });
