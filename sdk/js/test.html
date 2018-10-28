@@ -53,17 +53,15 @@
             });
             $("#sub").click(function(){
                 SimplePubSub.subscribe($("#inp1").val())
-                $("#inp1").val("")
             });
 
              $("#unsub").click(function(){
                 SimplePubSub.unsubscribe($("#inp1").val())
-                $("#inp1").val("")
             });
 
              $("#pub").click(function(){
-                SimplePubSub.publish($("#inp2").val(),$("#inp3").val())
-                $("#inp3").val("")
+                SimplePubSub.publish($("#inp1").val(),$("#inp2").val())
+                $("#inp2").val("")
             });
         });
         </script>
