@@ -1,8 +1,70 @@
 <html>
     <head>
         <script src="client.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     </head>
     <body>
-        
+        <div class="box">
+            <p>Quick Test</p>
+            <input id="inp1" placeholder="name of topic"><br>
+            <input id ="inp2" placeholder="data"><br>
+            <button id="sub"> subscribe</button> <button id="unsub"> unsubscribe</button><button id="pub">Publish</button><br>
+        </div>
+        <ul id="log"></ul>
     </body>
+    <style>
+        body, input, button {
+            font-family: monospace;
+            padding: 0;
+            margin: 0;
+        }
+        input {
+            border: 1px solid black;
+            width: 243px;
+            height: 25px;
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+        button{
+            border-color: black;
+            background: black;
+            color: white;
+            height: 25px;
+            padding: 5px;
+            margin-right: 10px;
+        }
+        div.box {
+            padding: 10px;
+            background: rgba(0,0,0,0.1);
+        }
+    </style>
+    <script>
+        $(document).ready(function(){
+            function log(str){
+                $("#log").append("<li>"+str+"</li>")
+            }
+            SimplePubSub.init()
+            SimplePubSub.attach({
+                'onConnect':function(){log("[TEST] onConnect")},
+                'onDisconnect':function(){log("[TEST] onDisconnect")},
+                'onError':function(){log("[TEST] onError")},
+                'onMessage':function(t,d){log("[TEST] onMessage : topic:"+t+" Data:"+d)},
+                'onSignal':function(t,d){log("[TEST] onSignal -> Topic:"+t+" data:"+d)}
+            });
+            $("#sub").click(function(){
+                SimplePubSub.subscribe($("#inp1").val())
+                $("#inp1").val("")
+            });
+
+             $("#unsub").click(function(){
+                SimplePubSub.unsubscribe($("#inp1").val())
+                $("#inp1").val("")
+            });
+
+             $("#pub").click(function(){
+                SimplePubSub.publish($("#inp2").val(),$("#inp3").val())
+                $("#inp3").val("")
+            });
+        });
+        </script>
 </html>
