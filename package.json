@@ -1,0 +1,18 @@
+{
+  "name": "simplepubsub",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "dependencies": {
+    "async-limiter": "^2.0.0",
+    "ws": "^7.4.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "tsc": "tsc",
+    "dev": "ts-node-dev --respawn --transpileOnly ./app/server.ts",
+    "prod": "tsc && forever -w ./build/server.js"
+  },
+  "author": "Dipankar Dutta",
+  "license": "ISC"
+}

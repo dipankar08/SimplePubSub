@@ -1,0 +1,34 @@
+{
+  /*
+    "saveAndRun": {
+        "commands": [
+          {
+            "match": ".ts",
+            "cmd": "tsc",
+            "useShortcut": false,
+            "silent": false
+          }
+        ]
+      },
+      */
+    "python.pythonPath": "/usr/bin/python",
+    "cSpell.words": [
+      "GMAIL",
+      "TWILLO",
+      "allparmas",
+      "confirmstr",
+      "cookieparser",
+      "dbname",
+      "nodel",
+      "randomatic",
+      "randomstring",
+      "rankdown",
+      "rankup",
+      "reqq",
+      "res",
+      "signup",
+      "simplestore",
+      "timeit",
+      "twilio"
+    ]       
+}
