@@ -1,0 +1,1 @@
+node ../node_modules/node-fest/lib/ws/ws.js -f testcase.txt

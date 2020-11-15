@@ -1,0 +1,26 @@
+=> context => server => ws://localhost:8080
+
+### subscribe and unsubscribe
+=> connect => {{server}} => client1
+
+=> send => {{client1}} =>  {"type":"subscribe", "topic":"topicA","username":"client1","debug":true}
+=> check_recv => {{client1}} => client1 subscribed topicA
+
+=> send => {{client1}} =>  {"type":"subscribe", "topic":"topicB","username":"client1"}
+=> check_recv => {{client1}} => client1 subscribed topicB
+
+=> send => {{client1}} =>  {"type":"subscribe", "topic":"topicA","username":"client1"}
+=> check_recv => {{client1}} => already subscribed
+
+=> send => {{client1}} => {"type":"unsubscribe", "topic":"topicA"}
+=> check_recv => {{client1}} => client1 unsubscribed topicA
+
+=> send => {{client1}} => {"type":"unsubscribe", "topic":"topicA"}
+=> check_recv => {{client1}} => already unsubscribed
+
+=> send => {{client1}} => {"type":"unsubscribe", "topic":"topicA"}
+=> check_recv => {{client1}} => already unsubscribed
+
+=> send => {{client1}} => {"type":"status"}
+=> check_recv => {{client1}} => XXX
+

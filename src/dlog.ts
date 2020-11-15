@@ -13,4 +13,8 @@ export namespace dlog {
     export function trace(){
 
     }
+    export function err(err:Error){
+        console.log(err.stack)
+    }
+
 }

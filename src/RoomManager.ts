@@ -1,32 +1,38 @@
 import { Connection } from "./Connection";
 
 class TopicManager {
-    greeting: string;
-    topicMaps : Map<string, Set<Connection>>
-    connMaps:Map<Connection, string>;
+    // This is bi-detcetinal map for quick loopup.
+    topicMaps : Map<string, Set<Connection>> // for a topic which conntion are associted.
+    connMaps:Map<Connection, Set<string>>; // for a comnnectin which topics they subsriobed
     constructor() {
       this.topicMaps = new Map();
       this.connMaps = new Map()
     }
 
     addConnection(topic:string, conn:Connection){
+      if( this.topicMaps.get(topic) && this.topicMaps.get(topic).has(conn)){
+        throw Error("already subscribed");
+      }
       if(!this.topicMaps.has(topic)){
         this.topicMaps.set(topic, new Set());
-        this.connMaps
       }
       this.topicMaps.get(topic).add(conn);
-      this.connMaps.set(conn, topic);
-    }
-
-    removeConnection(conn:Connection){
-      let topic = this.connMaps.get(conn);
-      if(topic){
-        this.topicMaps.get(topic).delete(conn);
+      if(!this.connMaps.has(conn)){
+        this.connMaps.set(conn, new Set());
       }
+      this.connMaps.get(conn).add(topic);
     }
 
-    getPeers(conn:Connection): Connection[]{
-      let topic = this.connMaps.get(conn);
+    removeConnection(topic:string, conn:Connection){
+      if(!this.connMaps.has(conn)){
+        throw Error("already unsubscribed");
+      }
+      this.topicMaps.get(topic).delete(conn);
+      this.connMaps.get(conn).delete(topic);
+
+      // clean up DS empty.
+    }
+    getPeers(topic:string): Connection[]{
       if(!topic){
         return [];
       }

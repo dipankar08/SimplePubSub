@@ -1,21 +1,23 @@
 
 export type TopicConfig ={
-    name:string,
+    topic:string,// topic name
     limit:number,
     isBroadCastSupported:boolean,
     isLookBack:boolean,
     authorInfo?:any,
     TTL:number // second
-    isDebug:boolean // true to get stack
+    debug:boolean // true to get stack
+    username:string,
 }
 
 export const defaultTopicConfig: TopicConfig = {
-    name:"",
+    topic:"",
     limit:100,
     isBroadCastSupported:true,
     isLookBack:true,
     TTL:5*60,
-    isDebug:false,
+    debug:false,
+    username:"guest",
 }
 
 class TopicConfigManager {
@@ -35,11 +37,17 @@ class TopicConfigManager {
 
     buildConfig(topic: any, json: any): TopicConfig {
         var config = defaultTopicConfig;
-        if(json.isDebug){
-            config.isDebug = json.isDebug;
+        if(json.topic){
+            config.topic = json.topic;
+        }
+        if(json.debug){
+            config.debug = json.debug;
         }
         if(json.isLookBack){
             config.isLookBack = json.isLookBack;
+        }
+        if(json.username){
+            config.username = json.username;
         }
         return json;
     }

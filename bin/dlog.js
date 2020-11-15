@@ -17,5 +17,9 @@ var dlog;
     function trace() {
     }
     dlog.trace = trace;
+    function err(err) {
+        console.log(err.stack);
+    }
+    dlog.err = err;
 })(dlog = exports.dlog || (exports.dlog = {}));
 //# sourceMappingURL=dlog.js.map

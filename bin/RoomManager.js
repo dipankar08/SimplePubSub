@@ -6,21 +6,27 @@ class TopicManager {
         this.connMaps = new Map();
     }
     addConnection(topic, conn) {
+        if (this.topicMaps.get(topic) && this.topicMaps.get(topic).has(conn)) {
+            throw Error("already subscribed");
+        }
         if (!this.topicMaps.has(topic)) {
             this.topicMaps.set(topic, new Set());
-            this.connMaps;
         }
         this.topicMaps.get(topic).add(conn);
-        this.connMaps.set(conn, topic);
-    }
-    removeConnection(conn) {
-        let topic = this.connMaps.get(conn);
-        if (topic) {
-            this.topicMaps.get(topic).delete(conn);
+        if (!this.connMaps.has(conn)) {
+            this.connMaps.set(conn, new Set());
         }
+        this.connMaps.get(conn).add(topic);
     }
-    getPeers(conn) {
-        let topic = this.connMaps.get(conn);
+    removeConnection(topic, conn) {
+        if (!this.connMaps.has(conn)) {
+            throw Error("already unsubscribed");
+        }
+        this.topicMaps.get(topic).delete(conn);
+        this.connMaps.get(conn).delete(topic);
+        // clean up DS empty.
+    }
+    getPeers(topic) {
         if (!topic) {
             return [];
         }

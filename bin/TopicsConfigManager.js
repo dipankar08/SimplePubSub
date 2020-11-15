@@ -1,12 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.defaultTopicConfig = {
-    name: "",
+    topic: "",
     limit: 100,
     isBroadCastSupported: true,
     isLookBack: true,
     TTL: 5 * 60,
-    isDebug: false,
+    debug: false,
+    username: "guest",
 };
 class TopicConfigManager {
     constructor() {
@@ -22,11 +23,17 @@ class TopicConfigManager {
     }
     buildConfig(topic, json) {
         var config = exports.defaultTopicConfig;
-        if (json.isDebug) {
-            config.isDebug = json.isDebug;
+        if (json.topic) {
+            config.topic = json.topic;
+        }
+        if (json.debug) {
+            config.debug = json.debug;
         }
         if (json.isLookBack) {
             config.isLookBack = json.isLookBack;
+        }
+        if (json.username) {
+            config.username = json.username;
         }
         return json;
     }
