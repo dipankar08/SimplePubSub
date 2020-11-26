@@ -79,11 +79,35 @@ export class Connection {
                         this.sendError(topic, "message_ack", err.message);
                     }
                     break;
+                case "reset":
+                    dlog.trace();
+                    try{
+                        this.sendSelf("reset_ack", "reset done --- TODO --")
+                        
+                    } catch(err){
+                        dlog.err(err)
+                        this.sendError(topic, "reset_ack", err.message);
+                    }
+                    break;
+                case "status":
+                    dlog.trace();
+                    try{
+                        this.sendSelf("status_ack", "status is: -- TODO --")
+                    } catch(err){
+                        dlog.err(err)
+                        this.sendError(topic, "status_ack", err.message);
+                    }
+                    break;
                 default:
                     dlog.trace();
                     this.sendError(topic, "unsubscribe_ack", `You must send a message with topic subscribe | unsubscribe | message`)
 
             }
+    }
+
+    private sendSelf(type:string, msg:string){
+        dlog.trace();
+        this.ws.send(JSON.stringify({'type':type,'data':msg}))
     }
 
     removeTopic(topic: string) {

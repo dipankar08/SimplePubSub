@@ -1,0 +1,111 @@
+<html>
+
+<head>
+    <script src="client.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+</head>
+
+<body>
+    <div class="left">
+        <p>Network Request</p>
+        <div class="box">
+            <input id="u_url" placeholder="WS URL">
+            <button id="b_connect">Connect/Disconnect</button>
+        </div>
+        <div class="box">
+            <textarea class="data" id="m_input" placeholder="write your payload"></textarea>
+            <button id="b_send">Send</button>
+        </div>
+        <div class="box">
+            <p class="help">Help</p>
+            <ul>
+                <li>First, Enter URL and Press connect or disconnect (wss://echo.websocket.org), You should be seeing connected message in right panel</li>
+                <li>Second, You write some string data in the right side and send it to the server, you will see the echo back</li>
+            </ul>
+        </div>
+    </div>
+    <div class="right">
+        <p>Network Response</p>
+        <ul id="log"></ul>
+    </div>
+</body>
+<style>
+    body {
+        display: flex;
+        flex-direction: row;
+        font-family: monospace;
+        margin: 0;
+    }
+
+    .left,
+    .right {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        margin: 10px;
+    }
+
+    .box {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        margin-top: 20px;
+    }
+    .data {
+        min-height: 105px;
+        padding: 10px; 
+    }
+
+    .message textarea {
+        flex: 1
+    }
+
+    .right textarea {
+        flex: 1;
+    }
+
+    input {
+        border: 1px solid black;
+    padding: 14px 6px;
+    outline: transparent;
+    border-radius: 0;
+    }
+
+    button {
+        border-color: black;
+        background: black;
+        color: white;
+        height: 45px;
+        padding: 11px 20px;
+    }
+    p {
+        background: black;
+        padding: 13px;
+        margin: 0;
+        color: white;
+        align-content: center;
+        text-align: center;
+    }
+</style>
+<script>
+    $(document).ready(function () {
+        function log(str) {
+            $("#log").append("<li>" + str + "</li>")
+        }
+        SimplePubSub.addCallback({
+            'onConnect': function () { log("[onConnect] WS connected") },
+            'onDisconnect': function () { log("[onDisconnect] WS Disconnected") },
+            'onError': function (msg) { log("[onError]"+msg) },
+            'onMessage': function (data) { log("[onMessage]"+data)},
+        });
+        $("#b_connect").click(function () {
+            SimplePubSub.connect($("#u_url").val())
+        });
+
+        $("#b_send").click(function () {
+            SimplePubSub.send($("#m_input").val())
+        });
+    });
+</script>
+
+</html>

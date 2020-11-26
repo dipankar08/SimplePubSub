@@ -1,4 +1,49 @@
 => context => server => ws://localhost:8080
+### Multi peer Messaging
+# There are 3 clients
+=> connect => {{server}} => client1
+=> connect => {{server}} => client2
+=> connect => {{server}} => client3
+=> send => {{client1}} => {"type":"reset","key":"admin"} => reset done
+=> send => {{client1}} => {"type":"status","key":"admin"} => status is
+=> debug
+
+# client1 and client2 subscribe to topic_a and client3 subscribe to topic_b;
+# If client 1 send a data it will recv by client 1 and client 2, they will get message_ack
+# if client 2 send a data it will recv by client 1 and client 2, they will get message_ack
+# if client 3 send a data it will rec by clint 3 to only topic_b but should not able to send topic_b
+# Now client 2 unsubscribe and it should not able send or recv.
+# If client 2 again subscribe, it should able to send and recv data.
+=> send => {{client1}} =>  {"type":"subscribe", "topic":"topic_a","username":"client1","debug":true}
+=> send => {{client2}} =>  {"type":"subscribe", "topic":"topic_a","username":"client2","debug":true} 
+=> send => {{client3}} =>  {"type":"subscribe", "topic":"topic_b","username":"client3","debug":true} 
+=> check_recv => {{client1}} => client1 subscribed topic_a
+=> check_recv => {{client1}} => client2 subscribed topic_a
+=> check_recv => {{client2}} => client2 subscribed topic_a 
+=> check_recv => {{client3}} => client3 subscribed topic_b
+
+# Check sending message
+=> send => {{client1}} =>  {"type":"message", "topic":"topic_a", "message":"hello_1"}
+=> send => {{client2}} =>  {"type":"message", "topic":"topic_a", "message":"hello_2"}
+=> send => {{client3}} =>  {"type":"message", "topic":"topic_b", "message":"hello_3"}
+=> send => {{client3}} =>  {"type":"message", "topic":"topic_a", "message":"hello_3"} 
+=> debug
+=> check_recv => {{client1}} => hello_1 => hello_2 => hello_3
+=> check_recv => {{client2}} => hello_1 => hello_2 => hello_3
+=> check_recv => {{client3}} => hello_3
+=> debug
+
+
+
+
+=> send => {{client2}} =>  {"type":"unsubscribe", "topic":"topic_a","username":"client2","debug":true} => unsubscribed
+=> send => {{client2}} =>  {"type":"message", "topic":"topic_a","data":"hello_4"} => not sent 
+=> send => {{client1}} =>  {"type":"message", "topic":"topic_a","data":"hello_4"} => sent 
+=> check_recv => {{client2}} => no message
+=> send => {{client2}} =>  {"type":"subscribe", "topic":"topic_a","username":"client2","debug":true} => unsubscribed
+
+
+
 
 ### subscribe and unsubscribe
 => connect => {{server}} => client1
@@ -23,4 +68,12 @@
 
 => send => {{client1}} => {"type":"status"}
 => check_recv => {{client1}} => XXX
+
+
+
+
+
+
+
+### Working with timeout
 
