@@ -5,6 +5,7 @@ import { verifyOrThrow } from "./Assert";
 import { dlog } from "./dlog";
 import { topicManager } from "./RoomManager";
 import { defaultTopicConfig, TopicConfig, topicConfigManager } from "./TopicsConfigManager";
+import { IObject } from "./utils";
 
 export class Connection {
     ws: WebSocket;
@@ -25,13 +26,12 @@ export class Connection {
         dlog.trace();
         try{
             this.mTopicConfigMap.forEach(function(v, topic){
-                this.removeTopic(topic);
+                this.handleUnsubscribe({topic:topic});
             })
         } catch(e){
             dlog.err(e)
         }
     }
-
 
     handleMessage(data:any){
         dlog.trace();
@@ -44,17 +44,15 @@ export class Connection {
         }
     }
 
-    private handleJsonData(json:any){
+    private handleJsonData(json:IObject){
         dlog.trace();
         let topic = json.topic || "default";
             switch(json.type) {
                 case 'subscribe':
                     dlog.trace();
                     try{
-                        verifyOrThrow(json.topic,"Please send the topic");
-                        topicManager.addConnection(topic, this);
-                        this.mTopicConfigMap.set(topic, topicConfigManager.buildConfig(topic,json));
-                        this.propagateMessage(topic, `${this.mTopicConfigMap.get(topic).username} subscribed ${this.mTopicConfigMap.get(topic).topic}`)
+                        this.handleSubscribe(json);
+                        this.sendPeers("subscribe_ack", topic, `${this.mTopicConfigMap.get(topic).username} subscribed ${topic}`)
                     } catch(err){
                         dlog.err(err)
                         this.sendError(topic, "subscribe_ack", err.message)
@@ -63,8 +61,8 @@ export class Connection {
                 case 'unsubscribe':
                     dlog.trace();
                     try{
-                        verifyOrThrow(json.topic,"Please send the topic");
-                        this.removeTopic(json.topic);
+                         
+                            this.handleUnSubscribe(json);
                     } catch(err){
                         dlog.err(err)
                         this.sendError(topic, "unsubscribe_ack", err.message)
@@ -73,17 +71,17 @@ export class Connection {
                 case "message":
                     dlog.trace();
                     try{
-                        this.propagateMessage(topic, json.message)
+                        this.sendJsonToPeers(json)
+                        this.sendSelf("message_ack",`message sent to topic: ${topic}`);
                     } catch(err){
                         dlog.err(err)
-                        this.sendError(topic, "message_ack", err.message);
+                        this.sendError(topic,"message_ack", err.message);
                     }
                     break;
                 case "reset":
                     dlog.trace();
                     try{
                         this.sendSelf("reset_ack", "reset done --- TODO --")
-                        
                     } catch(err){
                         dlog.err(err)
                         this.sendError(topic, "reset_ack", err.message);
@@ -105,22 +103,26 @@ export class Connection {
             }
     }
 
-    private sendSelf(type:string, msg:string){
-        dlog.trace();
-        this.ws.send(JSON.stringify({'type':type,'data':msg}))
+    handleSubscribe(json: IObject) {
+        verifyOrThrow(json.topic,"Please send the topic");
+        topicManager.addConnection(json.topic, this);
+        this.mTopicConfigMap.set(json.topic, topicConfigManager.buildConfig(json.topic,json));
     }
 
-    removeTopic(topic: string) {
-        if(!this.mTopicConfigMap.has(topic)){
-            throw Error(`already unsubscribed ${topic}`)
+    handleUnSubscribe(json: IObject) {
+        verifyOrThrow(json.topic,"Please send the topic");
+        if(!this.mTopicConfigMap.has(json.topic)){
+            throw Error(`already unsubscribed ${json.topic}`)
         }
-        this.propagateMessage(topic, `${this.mTopicConfigMap.get(topic).username} unsubscribed ${this.mTopicConfigMap.get(topic).topic}`)
-        topicManager.removeConnection(topic, this);
-        this.mTopicConfigMap.delete(topic);
+        let username = this.mTopicConfigMap.get(json.topic).username;
+        this.sendPeers("unsubscribe_ack", json.topic, `${username} unsubscribed ${json.topic}`)
+        
+        topicManager.removeConnection(json.topic, this);
+        this.mTopicConfigMap.delete(json.topic);
     }
 
     private handleBinaryData(data:any){
-        this.sendError("default", "unknown", "Binary Data is not supported");
+        this.sendError("default", "unknown", `Binary Data is not supported yet, Please send a string encoded JSON:${data}`);
     }
 
     isOpen():boolean{
@@ -132,16 +134,21 @@ export class Connection {
         if( this.mTopicConfigMap.get(topic) && this.mTopicConfigMap.get(topic).debug){
             this.ws.send(JSON.stringify({'type':type,'data':msg,'status':'error', 'stack': new Error().stack}))
         } else {
-            this.ws.send(JSON.stringify({'type':type,'data':msg,'status':'error', 'stack': new Error().stack}))
+            this.ws.send(JSON.stringify({'type':type,'data':msg,'status':'error'}))
         }
     }
 
-    sendMessage(type, msg:string){
+    private sendSelf(type:string, msg:string){
         dlog.trace();
-        this.ws.send(JSON.stringify({'type':type,'data':msg}))
+        this.ws.send(JSON.stringify({'type':type,'message':msg}))
     }
 
-    propagateMessage(topic:string, message:any){
+    private selfSendJson(json:IObject){
+        dlog.trace();
+        this.ws.send(JSON.stringify(json))
+    }
+
+    sendPeers(type:string, topic:string, message:any){
         dlog.trace();
         verifyOrThrow(message, "the message is null or undefined")
         let peers = topicManager.getPeers(topic);
@@ -151,7 +158,23 @@ export class Connection {
                // TODO:
             }
             if(peerConn.isOpen()){
-                peerConn.sendMessage("message", message);
+                peerConn.selfSendJson({type:type,topic:topic, message:message});
+            }
+        })
+    }
+    sendJsonToPeers(json:IObject){
+        dlog.trace();
+        verifyOrThrow(json.topic, "Please send the intended topic")
+        verifyOrThrow(json.message, "the message is null or undefined")
+        verifyOrThrow(this.mTopicConfigMap.has(json.topic), "You must subscribe the topic first");
+        let peers = topicManager.getPeers(json.topic);
+        verifyOrThrow(peers.length > 0, "No one listening to this topic")
+        peers.forEach(function(peerConn){
+            if(peerConn == this && !this.mTopicConfig.isLookBack){
+               // TODO:
+            }
+            if(peerConn.isOpen()){
+                peerConn.selfSendJson(json);
             }
         })
     }

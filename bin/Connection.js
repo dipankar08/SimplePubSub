@@ -20,7 +20,7 @@ class Connection {
         dlog_1.dlog.trace();
         try {
             this.mTopicConfigMap.forEach(function (v, topic) {
-                this.removeTopic(topic);
+                this.handleUnsubscribe({ topic: topic });
             });
         }
         catch (e) {
@@ -45,10 +45,8 @@ class Connection {
             case 'subscribe':
                 dlog_1.dlog.trace();
                 try {
-                    Assert_1.verifyOrThrow(json.topic, "Please send the topic");
-                    RoomManager_1.topicManager.addConnection(topic, this);
-                    this.mTopicConfigMap.set(topic, TopicsConfigManager_1.topicConfigManager.buildConfig(topic, json));
-                    this.propagateMessage(topic, `${this.mTopicConfigMap.get(topic).username} subscribed ${this.mTopicConfigMap.get(topic).topic}`);
+                    this.handleSubscribe(json);
+                    this.sendPeers("subscribe_ack", topic, `${this.mTopicConfigMap.get(topic).username} subscribed ${topic}`);
                 }
                 catch (err) {
                     dlog_1.dlog.err(err);
@@ -58,8 +56,7 @@ class Connection {
             case 'unsubscribe':
                 dlog_1.dlog.trace();
                 try {
-                    Assert_1.verifyOrThrow(json.topic, "Please send the topic");
-                    this.removeTopic(json.topic);
+                    this.handleUnSubscribe(json);
                 }
                 catch (err) {
                     dlog_1.dlog.err(err);
@@ -69,7 +66,8 @@ class Connection {
             case "message":
                 dlog_1.dlog.trace();
                 try {
-                    this.propagateMessage(topic, json.message);
+                    this.sendJsonToPeers(json);
+                    this.sendSelf("message_ack", `message sent to topic: ${topic}`);
                 }
                 catch (err) {
                     dlog_1.dlog.err(err);
@@ -101,20 +99,23 @@ class Connection {
                 this.sendError(topic, "unsubscribe_ack", `You must send a message with topic subscribe | unsubscribe | message`);
         }
     }
-    sendSelf(type, msg) {
-        dlog_1.dlog.trace();
-        this.ws.send(JSON.stringify({ 'type': type, 'data': msg }));
+    handleSubscribe(json) {
+        Assert_1.verifyOrThrow(json.topic, "Please send the topic");
+        RoomManager_1.topicManager.addConnection(json.topic, this);
+        this.mTopicConfigMap.set(json.topic, TopicsConfigManager_1.topicConfigManager.buildConfig(json.topic, json));
     }
-    removeTopic(topic) {
-        if (!this.mTopicConfigMap.has(topic)) {
-            throw Error(`already unsubscribed ${topic}`);
+    handleUnSubscribe(json) {
+        Assert_1.verifyOrThrow(json.topic, "Please send the topic");
+        if (!this.mTopicConfigMap.has(json.topic)) {
+            throw Error(`already unsubscribed ${json.topic}`);
         }
-        this.propagateMessage(topic, `${this.mTopicConfigMap.get(topic).username} unsubscribed ${this.mTopicConfigMap.get(topic).topic}`);
-        RoomManager_1.topicManager.removeConnection(topic, this);
-        this.mTopicConfigMap.delete(topic);
+        let username = this.mTopicConfigMap.get(json.topic).username;
+        this.sendPeers("unsubscribe_ack", json.topic, `${username} unsubscribed ${json.topic}`);
+        RoomManager_1.topicManager.removeConnection(json.topic, this);
+        this.mTopicConfigMap.delete(json.topic);
     }
     handleBinaryData(data) {
-        this.sendError("default", "unknown", "Binary Data is not supported");
+        this.sendError("default", "unknown", `Binary Data is not supported yet, Please send a string encoded JSON:${data}`);
     }
     isOpen() {
         return this.ws.readyState == ws_1.OPEN;
@@ -125,14 +126,18 @@ class Connection {
             this.ws.send(JSON.stringify({ 'type': type, 'data': msg, 'status': 'error', 'stack': new Error().stack }));
         }
         else {
-            this.ws.send(JSON.stringify({ 'type': type, 'data': msg, 'status': 'error', 'stack': new Error().stack }));
+            this.ws.send(JSON.stringify({ 'type': type, 'data': msg, 'status': 'error' }));
         }
     }
-    sendMessage(type, msg) {
+    sendSelf(type, msg) {
         dlog_1.dlog.trace();
-        this.ws.send(JSON.stringify({ 'type': type, 'data': msg }));
+        this.ws.send(JSON.stringify({ 'type': type, 'message': msg }));
     }
-    propagateMessage(topic, message) {
+    selfSendJson(json) {
+        dlog_1.dlog.trace();
+        this.ws.send(JSON.stringify(json));
+    }
+    sendPeers(type, topic, message) {
         dlog_1.dlog.trace();
         Assert_1.verifyOrThrow(message, "the message is null or undefined");
         let peers = RoomManager_1.topicManager.getPeers(topic);
@@ -142,7 +147,23 @@ class Connection {
                 // TODO:
             }
             if (peerConn.isOpen()) {
-                peerConn.sendMessage("message", message);
+                peerConn.selfSendJson({ type: type, topic: topic, message: message });
+            }
+        });
+    }
+    sendJsonToPeers(json) {
+        dlog_1.dlog.trace();
+        Assert_1.verifyOrThrow(json.topic, "Please send the intended topic");
+        Assert_1.verifyOrThrow(json.message, "the message is null or undefined");
+        Assert_1.verifyOrThrow(this.mTopicConfigMap.has(json.topic), "You must subscribe the topic first");
+        let peers = RoomManager_1.topicManager.getPeers(json.topic);
+        Assert_1.verifyOrThrow(peers.length > 0, "No one listening to this topic");
+        peers.forEach(function (peerConn) {
+            if (peerConn == this && !this.mTopicConfig.isLookBack) {
+                // TODO:
+            }
+            if (peerConn.isOpen()) {
+                peerConn.selfSendJson(json);
             }
         });
     }
