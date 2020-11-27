@@ -3,9 +3,8 @@ import WebSocket from "ws"
 import { Connection } from "./Connection";
 
 const wssConfig ={
- port: 8080
+  port: process.env.vs_debug == "true"? 8080:7777
 }
-
 const wss = new WebSocket.Server(wssConfig);
 wss.on('connection', function cb(socket:WebSocket, req:IncomingMessage){
     const connection:Connection =  new Connection(socket);
@@ -17,4 +16,4 @@ wss.on('connection', function cb(socket:WebSocket, req:IncomingMessage){
         connection.handleMessage(data);
     });
 })
-console.log("[SimplePubSub] Server started on port 8080.")
+console.log(`[SimplePubSub] Server started on port ${wssConfig.port}` )

@@ -7,26 +7,13 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "thisfile",
-            "program": "${file}",
-            "sourceMaps": true
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Server",
-            "program": "${workspaceFolder}/build/server.js",
-            "sourceMaps": true
-        },
-        {
-            "type": "node",
-            "request": "launch",
             "name": "Start Server",
             "preLaunchTask": "tsc: build - tsconfig.json",
             "program": "${workspaceFolder}/src/server.ts",
             "outFiles": [
                 "${workspaceFolder}/bin/**/*.js"
-            ]
+            ],
+            "env": {"vs_debug":"true"},
         }
     ]
 }
